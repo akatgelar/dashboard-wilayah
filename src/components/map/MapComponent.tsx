@@ -411,15 +411,15 @@ export default  function MapComponent() {
     } 
     if (selectedKota.current?.value) { 
       param = '?kota_kode='+selectedKota.current?.value
-      setMapZoom(9)
+      setMapZoom(10)
     } 
     if (selectedKecamatan.current?.value) { 
       param = '?kecamatan_kode='+selectedKecamatan.current?.value
-      setMapZoom(11)
+      setMapZoom(13)
     } 
     if (selectedKelurahan.current?.value) { 
       param = '?kelurahan_kode='+selectedKelurahan.current?.value
-      setMapZoom(13)
+      setMapZoom(16)
     } 
   
     await fetch('/api/polygon/' + url + param).then((response) => { 
@@ -462,15 +462,15 @@ export default  function MapComponent() {
     } 
     if (selectedKota.current.value !== '') {
       param += '&kota_kode='+selectedKota.current.value
-      setMapZoom(9)
+      setMapZoom(10)
     } 
     if (selectedKecamatan.current.value !== '') {
       param += '&kecamatan_kode='+selectedKecamatan.current.value
-      setMapZoom(11)
+      setMapZoom(13)
     } 
     if (selectedKelurahan.current.value !== '') {
       param += '&kelurahan_kode='+selectedKelurahan.current.value
-      setMapZoom(13)
+      setMapZoom(16)
     } 
 
     await fetch(url+param).then((response) => { 
@@ -726,7 +726,7 @@ export default  function MapComponent() {
             center={mapCenter} 
             zoom={mapZoom} 
             scrollWheelZoom={true} 
-            style={{ height: "600px", width: "100%", zIndex: 0 }}>
+            style={{ height: "450px", width: "100%", zIndex: 0 }}>
             <TileLayer
               attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
               url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
