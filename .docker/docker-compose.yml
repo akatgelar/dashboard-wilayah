@@ -1,0 +1,8 @@
+services:
+  dashboard-wilayah:
+    # build: .
+    image: ghcr.io/akatgelar/dashboard-wilayah:latest
+    container_name: 'dashboard-wilayah'  
+    ports:
+      - "2040:3000"
+    restart: always
