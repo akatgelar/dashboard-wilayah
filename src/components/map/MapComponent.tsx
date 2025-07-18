@@ -576,7 +576,7 @@ export default  function MapComponent() {
         
         <div className="grid grid-cols-12 gap-4 mb-2">
           {/* tab */} 
-          <div className="col-span-5">  
+          <div className="col-span-6">  
             <label className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-400">Pilih jenis wilayah </label>
             <div className="inline-flex gap-0.5 rounded-lg bg-gray-100 p-0.5 dark:bg-gray-900 mb-2">
               <button
@@ -630,7 +630,7 @@ export default  function MapComponent() {
           </div>
  
           {/* dropdown kamus */}   
-          <div className="col-span-7 ml-4">
+          <div className="col-span-6 ml-4">
             <label className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-400">Variable Data</label>
             <div className="flex justify ">
               <Select ref={selectInputKamus} options={optionsKamus} onChange={onChangeKamus} className="w-full"/> 
