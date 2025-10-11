@@ -38,6 +38,7 @@
     "react-flatpickr": "^3.10.13",
     "react-leaflet": "^5.0.0",
     "react-select": "^5.10.1",
+    "sweetalert2": "^11.26.1",
     "swiper": "^11.2.0",
     "tailwind-merge": "^2.6.0"
   },
