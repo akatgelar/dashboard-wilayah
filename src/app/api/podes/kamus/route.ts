@@ -12,7 +12,7 @@ export async function GET() {
                 database: process.env.MYSQL_DATABASE || 'podes',
             });
 
-        const [rows] = await connection.execute("SELECT `Nama Variabel` as kode, `Keterangan` as nama FROM podes2018_desa_kamus where `Kategori Isian` = '' and `Nama Variabel` not like 'R1%' ORDER BY `Keterangan` ASC");
+        const [rows] = await connection.execute("SELECT `Nama Variabel` as kode, `Keterangan` as nama FROM podes2018_desa_kamus where `Kategori Isian` = '' and `Nama Variabel` not like 'R1%' and `Keterangan` like '%jumlah%' ORDER BY `Keterangan` ASC");
         const response = {
             'status': true,
             'message': 'Get Data Success', 

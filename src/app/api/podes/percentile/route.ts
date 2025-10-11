@@ -29,7 +29,7 @@ export async function GET(request: NextRequest) {
         const params_kelurahan_kode = searchParams.get("kelurahan_kode");
 
         // message param error
-        if (params_podes_kode === null) {  
+        if (params_podes_kode === null || params_podes_kode == '') {  
             const response = {
                 'status': false,
                 'message': 'Param podes_kode not found', 
