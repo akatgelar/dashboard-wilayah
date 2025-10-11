@@ -10,7 +10,10 @@ import "leaflet-defaulticon-compatibility/dist/leaflet-defaulticon-compatibility
 import { useEffect, useRef, useState } from "react"
 import React from 'react'
 import Select, { SingleValue, SelectInstance } from 'react-select'    
-     
+import { showLoading } from '../../helpers/AlertHelper';
+import Swal from "sweetalert2";
+import Button from "../ui/button/Button";
+
 
 // Fix Leaflet's default icon paths
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -85,11 +88,7 @@ export default  function MapComponent() {
   const [mapCenter, setMapCenter] = useState<[number, number]>([-1.9327422372002818, 118.44064309533289]) 
   const [mapZoom, setMapZoom] = useState<number>(5)
   
-  const selectedTab = useRef<"provinsi" | "kota" | "kecamatan" | "kelurahan">("provinsi")  
-  const getButtonClass = (option: "provinsi" | "kota" | "kecamatan" | "kelurahan") =>
-    selectedTab.current === option
-      ? "shadow-theme-xs text-gray-900 dark:text-white bg-white dark:bg-gray-800"
-      : "text-gray-500 dark:text-gray-400";
+  const selectedTab = useRef<"provinsi" | "kota" | "kecamatan" | "kelurahan">("provinsi");
   
   // list option
   const [optionsProvinsi, setOptionsProvinsi] = useState<OptionsModel[]>()
@@ -126,15 +125,12 @@ export default  function MapComponent() {
   useEffect(() => { 
     if (!initializedOverview.current) {
       initializedOverview.current = true 
+      fetchAreaProvinsi()  
       fetchKamus()
-      fetchAreaProvinsi() 
-      setTimeout(function() {
-        fetchGeoJson() 
-      }, 0); 
     }  
   });
 
-	async function fetchAreaProvinsi() {   
+	async function fetchAreaProvinsi() {    
     await fetch('/api/area/provinsi').then((response) => { 
       if (response.status >= 500 && response.status < 600) {
         console.log(response.statusText)
@@ -154,13 +150,13 @@ export default  function MapComponent() {
         setOptionsProvinsi(tempArray) 
       } else { 
         console.log(result['message'])
-      } 
+      }  
     }).catch((error) => { 
       console.log(error); 
     }); 
   }
 
-	async function fetchAreaKota(row: SingleValue<OptionsModel>) {    
+	async function fetchAreaKota(row: SingleValue<OptionsModel>) {     
     await fetch('/api/area/kota?provinsi_kode='+row?.value).then((response) => { 
       if (response.status >= 500 && response.status < 600) {
         console.log(response.statusText)
@@ -180,13 +176,13 @@ export default  function MapComponent() {
         setOptionsKota(tempArray) 
       } else { 
         console.log(result['message'])
-      } 
+      }  
     }).catch((error) => { 
       console.log(error); 
     }); 
   }
 
-	async function fetchAreaKecamatan(row: SingleValue<OptionsModel>) {   
+	async function fetchAreaKecamatan(row: SingleValue<OptionsModel>) {    
     await fetch('/api/area/kecamatan?kota_kode='+row?.value).then((response) => { 
       if (response.status >= 500 && response.status < 600) {
         console.log(response.statusText)
@@ -206,13 +202,13 @@ export default  function MapComponent() {
         setOptionsKecamatan(tempArray) 
       } else { 
         console.log(result['message'])
-      } 
+      }  
     }).catch((error) => { 
       console.log(error); 
     }); 
   }
 
-	async function fetchAreaKelurahan(row: SingleValue<OptionsModel>) {   
+	async function fetchAreaKelurahan(row: SingleValue<OptionsModel>) {    
     await fetch('/api/area/kelurahan?kecamatan_kode='+row?.value).then((response) => { 
       if (response.status >= 500 && response.status < 600) {
         console.log(response.statusText)
@@ -232,13 +228,13 @@ export default  function MapComponent() {
         setOptionsKelurahan(tempArray) 
       } else { 
         console.log(result['message'])
-      } 
+      }  
     }).catch((error) => { 
       console.log(error); 
     }); 
   }
 
-	async function fetchKamus() {   
+	async function fetchKamus() {    
     await fetch('/api/podes/kamus').then((response) => { 
       if (response.status >= 500 && response.status < 600) {
         console.log(response.statusText)
@@ -258,7 +254,7 @@ export default  function MapComponent() {
         setOptionsKamus(tempArray) 
       } else { 
         console.log(result['message'])
-      } 
+      }  
     }).catch((error) => { 
       console.log(error); 
     }); 
@@ -277,8 +273,7 @@ export default  function MapComponent() {
       selectInputKecamatan.current?.clearValue()
       selectInputKelurahan.current?.clearValue()
       // call
-      fetchAreaKota(newValue) 
-      fetchGeoJson()
+      fetchAreaKota(newValue)  
     } 
   };
 
@@ -293,7 +288,7 @@ export default  function MapComponent() {
       selectInputKelurahan.current?.clearValue()
       // call
       fetchAreaKecamatan(newValue)
-      fetchGeoJson()
+      // fetchGeoJson()
     }  
   };
 
@@ -305,26 +300,21 @@ export default  function MapComponent() {
       // ref 
       selectInputKelurahan.current?.clearValue()
       // call
-      fetchAreaKelurahan(newValue)
-      fetchGeoJson()
+      fetchAreaKelurahan(newValue) 
     }
   };
 
   const onChangeKelurahan =  (newValue: SingleValue<OptionsModel>) => {  
     if (newValue) {
       // value
-      selectedKelurahan.current = {label: newValue!.label, value: newValue!.value}; 
-      // call
-      fetchGeoJson()
+      selectedKelurahan.current = {label: newValue!.label, value: newValue!.value};  
     }
   };
 
   const onChangeKamus =  (newValue: SingleValue<OptionsModel>) => {  
     if (newValue) {
       // value
-      selectedKamus.current = {label: newValue!.label, value: newValue!.value}; 
-      // call
-      fetchPercentile()
+      selectedKamus.current = {label: newValue!.label, value: newValue!.value};  
     }
   };
 
@@ -343,8 +333,7 @@ export default  function MapComponent() {
     const tempArray: OptionsModel[] = [];
     setOptionsKota(tempArray)
     setOptionsKecamatan(tempArray)
-    setOptionsKelurahan(tempArray)
-    fetchGeoJson()
+    setOptionsKelurahan(tempArray) 
   } 
 
   function clearKota() {  
@@ -359,8 +348,7 @@ export default  function MapComponent() {
     // list
     const tempArray: OptionsModel[] = []; 
     setOptionsKecamatan(tempArray)
-    setOptionsKelurahan(tempArray)
-    fetchGeoJson()
+    setOptionsKelurahan(tempArray) 
   }
 
   function clearKecamatan() {  
@@ -372,57 +360,64 @@ export default  function MapComponent() {
     selectInputKelurahan.current?.clearValue(); 
     // list
     const tempArray: OptionsModel[] = [];  
-    setOptionsKelurahan(tempArray)
-    fetchGeoJson()
+    setOptionsKelurahan(tempArray) 
   }
 
   function clearKelurahan() {  
     // value
     selectedKelurahan.current = {label: '', value: ''}  
     // ref
-    selectInputKelurahan.current?.clearValue(); 
-    // list
-    fetchGeoJson()
+    selectInputKelurahan.current?.clearValue();  
   }
 
   function clearKamus() {  
     // value
     selectedKamus.current = {label: '', value: ''} 
     // ref 
-    selectInputKamus.current?.clearValue();   
-    // list
-    fetchGeoJson()
+    selectInputKamus.current?.clearValue();    
   }
   
+  async function getData() {
+    selectedTab.current = 'provinsi'
+    if (selectedProvinsi.current?.value) {  
+      selectedTab.current = 'kota'
+    } 
+    if (selectedKota.current?.value) {  
+      selectedTab.current = 'kecamatan'
+    } 
+    if (selectedKecamatan.current?.value) {  
+      selectedTab.current = 'kelurahan'
+    } 
+    if (selectedKelurahan.current?.value) {  
+      selectedTab.current = 'kelurahan'
+    } 
+
+    fetchGeoJson()
+    fetchPercentile()
+  }
   
-	async function fetchGeoJson() {
-
-    if (selectedKamus.current?.value) {
-      fetchPercentile()
-    }
-
-    const url = selectedTab.current 
-    let param = '';  
-
+	async function fetchGeoJson() { 
+    let url = 'provinsi' 
     setMapZoom(5)
+
     if (selectedProvinsi.current?.value) { 
-      param = '?provinsi_kode='+selectedProvinsi.current?.value
-      setMapZoom(7)
+      url = 'kota?provinsi_kode='+selectedProvinsi.current?.value
+      setMapZoom(7) 
     } 
     if (selectedKota.current?.value) { 
-      param = '?kota_kode='+selectedKota.current?.value
-      setMapZoom(10)
+      url = 'kecamatan?kota_kode='+selectedKota.current?.value
+      setMapZoom(10) 
     } 
     if (selectedKecamatan.current?.value) { 
-      param = '?kecamatan_kode='+selectedKecamatan.current?.value
-      setMapZoom(13)
+      url = 'kelurahan?kecamatan_kode='+selectedKecamatan.current?.value
+      setMapZoom(13) 
     } 
     if (selectedKelurahan.current?.value) { 
-      param = '?kelurahan_kode='+selectedKelurahan.current?.value
-      setMapZoom(16)
+      url = 'kelurahan?kelurahan_kode='+selectedKelurahan.current?.value
+      setMapZoom(16) 
     } 
-  
-    await fetch('/api/polygon/' + url + param).then((response) => { 
+   
+    await fetch('/api/polygon/' + url).then((response) => { 
       if (response.status >= 500 && response.status < 600) {
         console.log(response.statusText)
       }  
@@ -442,37 +437,32 @@ export default  function MapComponent() {
         const centerLatLng = bounds.getCenter(); 
         setMapCenter([centerLatLng.lat, centerLatLng.lng]);
 
-        
-  
       } else { 
         console.log(result['message'])
-      } 
+      }  
     }).catch((error) => { 
       console.log(error); 
     }); 
   }
 
-  async function fetchPercentile() {
-
-    const url = '/api/podes/percentile'
+  async function fetchPercentile() {   
     let param = '?podes_kode='+selectedKamus.current.value
+
     if (selectedProvinsi.current.value !== '') {
-      param += '&provinsi_kode='+selectedProvinsi.current.value
-      setMapZoom(7)
+      param += '&provinsi_kode='+selectedProvinsi.current.value 
     } 
     if (selectedKota.current.value !== '') {
-      param += '&kota_kode='+selectedKota.current.value
-      setMapZoom(10)
+      param += '&kota_kode='+selectedKota.current.value 
     } 
     if (selectedKecamatan.current.value !== '') {
-      param += '&kecamatan_kode='+selectedKecamatan.current.value
-      setMapZoom(13)
+      param += '&kecamatan_kode='+selectedKecamatan.current.value 
     } 
     if (selectedKelurahan.current.value !== '') {
-      param += '&kelurahan_kode='+selectedKelurahan.current.value
-      setMapZoom(16)
+      param += '&kelurahan_kode='+selectedKelurahan.current.value 
     } 
 
+    showLoading()
+    const url = '/api/podes/percentile'
     await fetch(url+param).then((response) => { 
       if (response.status >= 500 && response.status < 600) {
         console.log(response.statusText)
@@ -486,54 +476,56 @@ export default  function MapComponent() {
       } else { 
         console.log(result['message'])
       } 
+      Swal.close();
     }).catch((error) => { 
       console.log(error); 
     }); 
   }
  
-  function generatePopup(selectedTab: string, properties: GeoJsonProperties, value: number) { 
+  function generatePopup(properties: GeoJsonProperties, value: number) { 
+  
     let html =  
       `<table>
         <tbody>`;
-    if ((['provinsi', 'kota', 'kecamatan', 'kelurahan'].includes(selectedTab)) ) {
-      html +=
-            `<tr>
-              <td>Provinsi </td>
-              <td>&nbsp; : &nbsp;</td>
-              <td>(${properties?.provinsi_kode}) ${properties?.provinsi_nama}</td>
-            </tr>`;
-    }
-    if ((['kota', 'kecamatan', 'kelurahan'].includes(selectedTab)) ) {
-      html +=
-            `<tr>
-              <td>Kota </td>
-              <td>&nbsp; : &nbsp;</td>
-              <td>(${properties?.kota_kode}) ${properties?.kota_nama}</td>
-            </tr>`;
-    }
-    if ((['kecamatan', 'kelurahan'].includes(selectedTab)) ) {
-      html +=
-            `<tr>
-              <td>Kecamatan </td>
-              <td>&nbsp; : &nbsp;</td>
-              <td>(${properties?.kecamatan_kode}) ${properties?.kecamatan_nama}</td>
-            </tr>`;
-    }
-    if ((['kelurahan'].includes(selectedTab)) ) {
-      html += 
-            `<tr>
-              <td>Kelurahan </td>
-              <td>&nbsp; : &nbsp;</td>
-              <td>(${properties?.kelurahan_kode}) ${properties?.kelurahan_nama}</td>
-            </tr>`;
-    }
-    html +=
-          `<tr>
-            <td>Value </td>
-            <td>&nbsp; : &nbsp;</td>
-            <td>${value.toLocaleString('id')}</td>
-          </tr>`;
-    html +=
+          if ((['provinsi', 'kota', 'kecamatan', 'kelurahan'].includes(selectedTab.current)) ) {
+            html +=
+                  `<tr>
+                    <td>Provinsi </td>
+                    <td>&nbsp; : &nbsp;</td>
+                    <td>(${properties?.provinsi_kode}) ${properties?.provinsi_nama}</td>
+                  </tr>`;
+          }
+          if ((['kota', 'kecamatan', 'kelurahan'].includes(selectedTab.current)) ) {
+            html +=
+                  `<tr>
+                    <td>Kota </td>
+                    <td>&nbsp; : &nbsp;</td>
+                    <td>(${properties?.kota_kode}) ${properties?.kota_nama}</td>
+                  </tr>`;
+          }
+          if ((['kecamatan', 'kelurahan'].includes(selectedTab.current)) ) {
+            html +=
+                  `<tr>
+                    <td>Kecamatan </td>
+                    <td>&nbsp; : &nbsp;</td>
+                    <td>(${properties?.kecamatan_kode}) ${properties?.kecamatan_nama}</td>
+                  </tr>`;
+          }
+          if ((['kelurahan'].includes(selectedTab.current)) ) {
+            html += 
+                  `<tr>
+                    <td>Kelurahan </td>
+                    <td>&nbsp; : &nbsp;</td>
+                    <td>(${properties?.kelurahan_kode}) ${properties?.kelurahan_nama}</td>
+                  </tr>`;
+          }
+          html +=
+                `<tr>
+                  <td>Value </td>
+                  <td>&nbsp; : &nbsp;</td>
+                  <td>${value.toLocaleString('id')}</td>
+                </tr>`;
+          html +=
         `</tbody>
       </table>
       `
@@ -558,152 +550,74 @@ export default  function MapComponent() {
 
   return (
     <div className="rounded-2xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-white/[0.03] ">
-      
-      {/* title */}
-      {/* <div className="px-6 py-5 flex flex-col gap-5 sm:flex-row sm:justify-between">
-        <div className="w-full">
-          <h3 className="text-lg font-semibold text-gray-800 dark:text-white/90">
-            Map Insight
-          </h3>
-          <p className="mt-1 text-gray-500 text-theme-sm dark:text-gray-400">
-            Lihat insight berdasarkan wilayah
-          </p>
-        </div> 
-      </div> */}
-
+       
       {/* content */}
       <div className="p-4 border-t border-gray-100 dark:border-gray-800 sm:p-6"> 
-        
-
+         
         {/* dropdown wilayah */}
         <div className="grid grid-cols-12 gap-4 mb-4">
-          {
-            // (['provinsi', 'kota', 'kecamatan', 'kelurahan'].includes(selectedTab.current)) 
-            // ?
-              <div className="col-span-3">
-                <label className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-400">Provinsi</label>
-                <div className="flex justify ">
-                  <Select ref={selectInputProvinsi} options={optionsProvinsi} onChange={onChangeProvinsi} className="w-full"/> 
-                  <button onClick={clearProvinsi}>
-                    <svg className="ml-1" width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                      <path d="M8.78362 8.78412C8.49073 9.07702 8.49073 9.55189 8.78362 9.84478L10.9388 12L8.78362 14.1552C8.49073 14.4481 8.49073 14.923 8.78362 15.2159C9.07652 15.5088 9.55139 15.5088 9.84428 15.2159L11.9995 13.0607L14.1546 15.2158C14.4475 15.5087 14.9224 15.5087 15.2153 15.2158C15.5082 14.9229 15.5082 14.448 15.2153 14.1551L13.0602 12L15.2153 9.84485C15.5082 9.55196 15.5082 9.07708 15.2153 8.78419C14.9224 8.4913 14.4475 8.4913 14.1546 8.78419L11.9995 10.9393L9.84428 8.78412C9.55139 8.49123 9.07652 8.49123 8.78362 8.78412Z" fill="gray"/>
-                      <path fillRule="evenodd" clipRule="evenodd" d="M12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2ZM3.5 12C3.5 7.30558 7.30558 3.5 12 3.5C16.6944 3.5 20.5 7.30558 20.5 12C20.5 16.6944 16.6944 20.5 12 20.5C7.30558 20.5 3.5 16.6944 3.5 12Z" fill="gray"/>
-                    </svg>
-                  </button>
-                </div>
+          { 
+            <div className="col-span-3">
+              <label className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-400">Provinsi</label>
+              <div className="flex justify ">
+                <Select ref={selectInputProvinsi} options={optionsProvinsi} onChange={onChangeProvinsi} className="w-full"/> 
+                <button onClick={clearProvinsi}>
+                  <svg className="ml-1" width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M8.78362 8.78412C8.49073 9.07702 8.49073 9.55189 8.78362 9.84478L10.9388 12L8.78362 14.1552C8.49073 14.4481 8.49073 14.923 8.78362 15.2159C9.07652 15.5088 9.55139 15.5088 9.84428 15.2159L11.9995 13.0607L14.1546 15.2158C14.4475 15.5087 14.9224 15.5087 15.2153 15.2158C15.5082 14.9229 15.5082 14.448 15.2153 14.1551L13.0602 12L15.2153 9.84485C15.5082 9.55196 15.5082 9.07708 15.2153 8.78419C14.9224 8.4913 14.4475 8.4913 14.1546 8.78419L11.9995 10.9393L9.84428 8.78412C9.55139 8.49123 9.07652 8.49123 8.78362 8.78412Z" fill="gray"/>
+                    <path fillRule="evenodd" clipRule="evenodd" d="M12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2ZM3.5 12C3.5 7.30558 7.30558 3.5 12 3.5C16.6944 3.5 20.5 7.30558 20.5 12C20.5 16.6944 16.6944 20.5 12 20.5C7.30558 20.5 3.5 16.6944 3.5 12Z" fill="gray"/>
+                  </svg>
+                </button>
               </div>
-            // : <></>
+            </div> 
           }
-          {
-            // (['kota', 'kecamatan', 'kelurahan'].includes(selectedTab.current)) 
-            // ? 
-              <div className="col-span-3">
-                <label className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-400">Kabupaten / Kota</label>
-                <div className="flex justify ">
-                  <Select ref={selectInputKota} options={optionsKota} onChange={onChangeKota} className="w-full"/> 
-                  <button onClick={clearKota}>
-                    <svg className="ml-1" width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                      <path d="M8.78362 8.78412C8.49073 9.07702 8.49073 9.55189 8.78362 9.84478L10.9388 12L8.78362 14.1552C8.49073 14.4481 8.49073 14.923 8.78362 15.2159C9.07652 15.5088 9.55139 15.5088 9.84428 15.2159L11.9995 13.0607L14.1546 15.2158C14.4475 15.5087 14.9224 15.5087 15.2153 15.2158C15.5082 14.9229 15.5082 14.448 15.2153 14.1551L13.0602 12L15.2153 9.84485C15.5082 9.55196 15.5082 9.07708 15.2153 8.78419C14.9224 8.4913 14.4475 8.4913 14.1546 8.78419L11.9995 10.9393L9.84428 8.78412C9.55139 8.49123 9.07652 8.49123 8.78362 8.78412Z" fill="gray"/>
-                      <path fillRule="evenodd" clipRule="evenodd" d="M12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2ZM3.5 12C3.5 7.30558 7.30558 3.5 12 3.5C16.6944 3.5 20.5 7.30558 20.5 12C20.5 16.6944 16.6944 20.5 12 20.5C7.30558 20.5 3.5 16.6944 3.5 12Z" fill="gray"/>
-                    </svg>
-                  </button>
-                </div>
+          { 
+            <div className="col-span-3">
+              <label className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-400">Kabupaten / Kota</label>
+              <div className="flex justify ">
+                <Select ref={selectInputKota} options={optionsKota} onChange={onChangeKota} className="w-full"/> 
+                <button onClick={clearKota}>
+                  <svg className="ml-1" width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M8.78362 8.78412C8.49073 9.07702 8.49073 9.55189 8.78362 9.84478L10.9388 12L8.78362 14.1552C8.49073 14.4481 8.49073 14.923 8.78362 15.2159C9.07652 15.5088 9.55139 15.5088 9.84428 15.2159L11.9995 13.0607L14.1546 15.2158C14.4475 15.5087 14.9224 15.5087 15.2153 15.2158C15.5082 14.9229 15.5082 14.448 15.2153 14.1551L13.0602 12L15.2153 9.84485C15.5082 9.55196 15.5082 9.07708 15.2153 8.78419C14.9224 8.4913 14.4475 8.4913 14.1546 8.78419L11.9995 10.9393L9.84428 8.78412C9.55139 8.49123 9.07652 8.49123 8.78362 8.78412Z" fill="gray"/>
+                    <path fillRule="evenodd" clipRule="evenodd" d="M12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2ZM3.5 12C3.5 7.30558 7.30558 3.5 12 3.5C16.6944 3.5 20.5 7.30558 20.5 12C20.5 16.6944 16.6944 20.5 12 20.5C7.30558 20.5 3.5 16.6944 3.5 12Z" fill="gray"/>
+                  </svg>
+                </button>
               </div>
-            // : <></>
+            </div> 
           } 
-          {
-            // (['kecamatan', 'kelurahan'].includes(selectedTab.current)) 
-            // ?
-              <div className="col-span-3">
-                <label className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-400">Kecamatan</label>
-                <div className="flex justify ">
-                  <Select ref={selectInputKecamatan} options={optionsKecamatan} onChange={onChangeKecamatan} className="w-full"/> 
-                  <button onClick={clearKecamatan}>
-                    <svg className="ml-1" width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                      <path d="M8.78362 8.78412C8.49073 9.07702 8.49073 9.55189 8.78362 9.84478L10.9388 12L8.78362 14.1552C8.49073 14.4481 8.49073 14.923 8.78362 15.2159C9.07652 15.5088 9.55139 15.5088 9.84428 15.2159L11.9995 13.0607L14.1546 15.2158C14.4475 15.5087 14.9224 15.5087 15.2153 15.2158C15.5082 14.9229 15.5082 14.448 15.2153 14.1551L13.0602 12L15.2153 9.84485C15.5082 9.55196 15.5082 9.07708 15.2153 8.78419C14.9224 8.4913 14.4475 8.4913 14.1546 8.78419L11.9995 10.9393L9.84428 8.78412C9.55139 8.49123 9.07652 8.49123 8.78362 8.78412Z" fill="gray"/>
-                      <path fillRule="evenodd" clipRule="evenodd" d="M12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2ZM3.5 12C3.5 7.30558 7.30558 3.5 12 3.5C16.6944 3.5 20.5 7.30558 20.5 12C20.5 16.6944 16.6944 20.5 12 20.5C7.30558 20.5 3.5 16.6944 3.5 12Z" fill="gray"/>
-                    </svg>
-                  </button>
-                </div>
+          { 
+            <div className="col-span-3">
+              <label className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-400">Kecamatan</label>
+              <div className="flex justify ">
+                <Select ref={selectInputKecamatan} options={optionsKecamatan} onChange={onChangeKecamatan} className="w-full"/> 
+                <button onClick={clearKecamatan}>
+                  <svg className="ml-1" width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M8.78362 8.78412C8.49073 9.07702 8.49073 9.55189 8.78362 9.84478L10.9388 12L8.78362 14.1552C8.49073 14.4481 8.49073 14.923 8.78362 15.2159C9.07652 15.5088 9.55139 15.5088 9.84428 15.2159L11.9995 13.0607L14.1546 15.2158C14.4475 15.5087 14.9224 15.5087 15.2153 15.2158C15.5082 14.9229 15.5082 14.448 15.2153 14.1551L13.0602 12L15.2153 9.84485C15.5082 9.55196 15.5082 9.07708 15.2153 8.78419C14.9224 8.4913 14.4475 8.4913 14.1546 8.78419L11.9995 10.9393L9.84428 8.78412C9.55139 8.49123 9.07652 8.49123 8.78362 8.78412Z" fill="gray"/>
+                    <path fillRule="evenodd" clipRule="evenodd" d="M12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2ZM3.5 12C3.5 7.30558 7.30558 3.5 12 3.5C16.6944 3.5 20.5 7.30558 20.5 12C20.5 16.6944 16.6944 20.5 12 20.5C7.30558 20.5 3.5 16.6944 3.5 12Z" fill="gray"/>
+                  </svg>
+                </button>
               </div>
-            // : <></>
+            </div> 
           } 
-          {
-            // (['kelurahan'].includes(selectedTab.current)) 
-            // ?
-              <div className="col-span-3">
-                <label className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-400">Desa / Kelurahan</label>
-                <div className="flex justify ">
-                  <Select ref={selectInputKelurahan} options={optionsKelurahan} onChange={onChangeKelurahan} className="w-full"/> 
-                  <button onClick={clearKelurahan}>
-                    <svg className="ml-1" width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                      <path d="M8.78362 8.78412C8.49073 9.07702 8.49073 9.55189 8.78362 9.84478L10.9388 12L8.78362 14.1552C8.49073 14.4481 8.49073 14.923 8.78362 15.2159C9.07652 15.5088 9.55139 15.5088 9.84428 15.2159L11.9995 13.0607L14.1546 15.2158C14.4475 15.5087 14.9224 15.5087 15.2153 15.2158C15.5082 14.9229 15.5082 14.448 15.2153 14.1551L13.0602 12L15.2153 9.84485C15.5082 9.55196 15.5082 9.07708 15.2153 8.78419C14.9224 8.4913 14.4475 8.4913 14.1546 8.78419L11.9995 10.9393L9.84428 8.78412C9.55139 8.49123 9.07652 8.49123 8.78362 8.78412Z" fill="gray"/>
-                      <path fillRule="evenodd" clipRule="evenodd" d="M12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2ZM3.5 12C3.5 7.30558 7.30558 3.5 12 3.5C16.6944 3.5 20.5 7.30558 20.5 12C20.5 16.6944 16.6944 20.5 12 20.5C7.30558 20.5 3.5 16.6944 3.5 12Z" fill="gray"/>
-                    </svg>
-                  </button>
-                </div>
+          { 
+            <div className="col-span-3">
+              <label className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-400">Desa / Kelurahan</label>
+              <div className="flex justify ">
+                <Select ref={selectInputKelurahan} options={optionsKelurahan} onChange={onChangeKelurahan} className="w-full"/> 
+                <button onClick={clearKelurahan}>
+                  <svg className="ml-1" width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M8.78362 8.78412C8.49073 9.07702 8.49073 9.55189 8.78362 9.84478L10.9388 12L8.78362 14.1552C8.49073 14.4481 8.49073 14.923 8.78362 15.2159C9.07652 15.5088 9.55139 15.5088 9.84428 15.2159L11.9995 13.0607L14.1546 15.2158C14.4475 15.5087 14.9224 15.5087 15.2153 15.2158C15.5082 14.9229 15.5082 14.448 15.2153 14.1551L13.0602 12L15.2153 9.84485C15.5082 9.55196 15.5082 9.07708 15.2153 8.78419C14.9224 8.4913 14.4475 8.4913 14.1546 8.78419L11.9995 10.9393L9.84428 8.78412C9.55139 8.49123 9.07652 8.49123 8.78362 8.78412Z" fill="gray"/>
+                    <path fillRule="evenodd" clipRule="evenodd" d="M12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2ZM3.5 12C3.5 7.30558 7.30558 3.5 12 3.5C16.6944 3.5 20.5 7.30558 20.5 12C20.5 16.6944 16.6944 20.5 12 20.5C7.30558 20.5 3.5 16.6944 3.5 12Z" fill="gray"/>
+                  </svg>
+                </button>
               </div>
-            // : <></>
+            </div> 
           } 
         </div> 
- 
-        <div className="grid grid-cols-12 gap-4 mb-2">
-          {/* tab */} 
-          <div className="col-span-6">  
-            <label className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-400">Pilih jenis visualisasi peta </label>
-            <div className="inline-flex gap-0.5 rounded-lg bg-gray-100 p-0.5 dark:bg-gray-900 mb-2">
-              <button
-                onClick={() => {
-                  selectedTab.current = "provinsi"  
-                  setTimeout(function() {
-                    fetchGeoJson()
-                  }, 0);
-                }}
-                className={`px-3 py-2 font-medium w-full rounded-md text-theme-sm hover:text-gray-900   dark:hover:text-white ${getButtonClass("provinsi")}`}
-              >
-                Provinsi 
-              </button>
 
-              <button
-                onClick={() => {
-                  selectedTab.current = "kota" 
-                  setTimeout(function() {
-                    fetchGeoJson()
-                  }, 0);
-                }}
-                className={`px-3 py-2 font-medium w-full rounded-md text-theme-sm hover:text-gray-900   dark:hover:text-white ${getButtonClass("kota")}`}
-              >
-                Kabupaten/Kota
-              </button>
+        {/* dropdown kamus */}   
+        <div className="grid grid-cols-12 gap-4 mb-4"> 
 
-              <button
-                onClick={() => { 
-                  selectedTab.current = "kecamatan"
-                  setTimeout(function() {
-                    fetchGeoJson()
-                  }, 0);
-                }}
-                className={`px-3 py-2 font-medium w-full rounded-md text-theme-sm hover:text-gray-900   dark:hover:text-white ${getButtonClass("kecamatan")}`}
-              >
-                Kecamatan 
-              </button>
-
-              <button
-                onClick={() => {
-                  selectedTab.current = "kelurahan"
-                  setTimeout(function() {
-                    fetchGeoJson()
-                  }, 0);
-                }}
-                className={`px-3 py-2 font-medium w-full rounded-md text-theme-sm hover:text-gray-900   dark:hover:text-white ${getButtonClass("kelurahan")}`}
-              >
-                Desa/Kelurahan
-              </button>
-            </div>
-          </div>
- 
-          {/* dropdown kamus */}   
-          <div className="col-span-6 ml-4">
+          <div className="col-span-6">
             <label className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-400">Variable Data</label>
             <div className="flex justify ">
               <Select ref={selectInputKamus} options={optionsKamus} onChange={onChangeKamus} className="w-full"/> 
@@ -714,12 +628,14 @@ export default  function MapComponent() {
                 </svg>
               </button>
             </div>
-          </div>  
+          </div>   
 
+          <div className="col-span-6">
+            <Button onClick={getData} className="w-full mt-5" size="sm">Tampilkan Data </Button>
+          </div>
         </div>
 
-        {/* map */}
-        {/* <span>{geoJsonData.features.length}</span> */}
+        {/* map */} 
         <div className="min-w-[1000px] xl:min-w-full">
           <MapContainer 
             key={geoJsonKey} 
@@ -747,7 +663,7 @@ export default  function MapComponent() {
                     style={{ fillColor, fillOpacity: 1, color: 'black', opacity: 1, weight: 0.5}}
                   >
                     <Popup key={`geojson${geoJsonKey}-popup${indexPolygon}`}>
-                      <div dangerouslySetInnerHTML={{ __html: generatePopup(selectedTab.current, polygon.properties, value) }}></div>  
+                      <div dangerouslySetInnerHTML={{ __html: generatePopup(polygon.properties, value) }}></div>  
                     </Popup>
                     {/* <Popup>{value}</Popup>  */}
                     <Tooltip>{nama}</Tooltip> 
