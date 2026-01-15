@@ -12,8 +12,14 @@ import React from 'react'
 import Select, { SingleValue, SelectInstance } from 'react-select'    
 import { showLoading } from '../../helpers/AlertHelper';
 import Swal from "sweetalert2";
-import Button from "../ui/button/Button";
+import Button from "../ui/button/Button"; 
+import dynamic from "next/dynamic";
+import { ApexOptions } from "apexcharts";
 
+// Dynamically import the ReactApexChart component
+const ReactApexChart = dynamic(() => import("react-apexcharts"), {
+  ssr: false,
+}); 
 
 // Fix Leaflet's default icon paths
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -80,6 +86,10 @@ type OptionsModel = {
   value: string;
   label: string;
 }
+interface SeriesModel { 
+  name: string,
+  data: number[], 
+};
 
 export default  function MapComponent() {
   
@@ -122,6 +132,100 @@ export default  function MapComponent() {
   const [percentileData, setPercentileData] = useState<PercentileModel[]>()
   const [rangelistData, setRangelistData] = useState<RangelistModel[]>()
   
+  // chart
+  const options: ApexOptions = {
+    colors: ["#10a67e"],
+    stroke: {
+      show: false,
+      width: 1,
+      colors: ["transparent"],
+    },
+    fill: {
+      opacity: 1,
+    },
+    markers: {
+      size: 0, // Size of the marker points
+      strokeColors: "#fff", // Marker border color
+      strokeWidth: 2,
+      hover: {
+        size: 6, // Marker size on hover
+      },
+    },
+    grid: {
+      yaxis: {
+        lines: {
+          show: true,
+        },
+      },
+    },
+    chart: {
+      fontFamily: "Outfit, sans-serif",
+      type: "bar",
+      height: 180,
+      width: '100%',
+      toolbar: {
+        show: false,
+      },
+      stacked: true, 
+    },
+    plotOptions: {
+      bar: {
+        horizontal: true,
+        columnWidth: "39%",
+        borderRadius: 5,
+        borderRadiusApplication: "end",
+      },
+    },
+    dataLabels: {
+      enabled: false,
+    },
+    tooltip: {
+      enabled: true,  
+      marker: {
+          show: true,
+      }, 
+      fixed: {
+        enabled: false,
+        position: 'topRight',
+        offsetX: 0,
+        offsetY: 0,
+      }, 
+    },
+    xaxis: {
+      categories: [],
+      axisBorder: {
+        show: false,
+      },
+      axisTicks: {
+        show: false,
+      }, 
+    },
+    yaxis: {
+      title: {
+        text: "",
+      },
+      labels: { 
+        formatter: function(value: { toLocaleString: () => string; }) {
+          return value.toLocaleString().replace(/,/g, '.'); // This will add thousand separators
+        }
+      }
+    },
+    legend: {
+      show: true,
+      position: 'top',
+      horizontalAlign: "right",
+      fontFamily: "Outfit",
+    },
+  }; 
+  const series = [
+    {
+      name: 'Jumlah',
+      data: [] as number[]
+    },  
+  ];  
+  const [seriesData, setSeriesData] = useState<SeriesModel[]>(series)
+  const [optionData, setOptionData] = useState<ApexOptions>(options)
+
   useEffect(() => { 
     if (!initializedOverview.current) {
       initializedOverview.current = true 
@@ -472,7 +576,16 @@ export default  function MapComponent() {
       const result = await response.json()  
       if (result["status"] == true) {  
         setPercentileData(result['data']['result'])
-        setRangelistData(result['data']['rangelist']) 
+        setRangelistData(result['data']['rangelist'])  
+
+        series[0]['data'] = [] 
+        options.xaxis!.categories = []
+        result['data']['result'].forEach((element: { wilayah_nama: string; value: number; })=> {
+          options.xaxis?.categories.push(element.wilayah_nama)
+          series[0]['data'].push(element.value) 
+        }); 
+        setOptionData(options)
+        setSeriesData(series)
       } else { 
         console.log(result['message'])
       } 
@@ -636,54 +749,66 @@ export default  function MapComponent() {
         </div>
 
         {/* map */} 
-        <div className="min-w-[1000px] xl:min-w-full">
-          <MapContainer 
-            key={geoJsonKey} 
-            center={mapCenter} 
-            zoom={mapZoom} 
-            scrollWheelZoom={true} 
-            style={{ height: "450px", width: "100%", zIndex: 0 }}>
-            <TileLayer
-              attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
-              url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
-            />    
-            
-            {
-              geoJsonData.features?.map((polygon, indexPolygon) => {
-                const kode = polygon.properties?.[`${selectedTab.current}_kode`];
-                const nama = polygon.properties?.[`${selectedTab.current}_nama`];
-                const percentile = percentileLookup(kode);
-                const fillColor = percentile?.color || (percentileData ? 'lightgray' : 'transparent');
-                const value = percentile?.value || 0;  
+        <div className="gap-4 mb-4">
+          <div className="w-full">
+            <MapContainer 
+              key={geoJsonKey} 
+              center={mapCenter} 
+              zoom={mapZoom} 
+              scrollWheelZoom={true} 
+              style={{ height: "450px", width: "100%", zIndex: 0 }}>
+              <TileLayer
+                attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
+                url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
+              />    
+              
+              {
+                geoJsonData.features?.map((polygon, indexPolygon) => {
+                  const kode = polygon.properties?.[`${selectedTab.current}_kode`];
+                  const nama = polygon.properties?.[`${selectedTab.current}_nama`];
+                  const percentile = percentileLookup(kode);
+                  const fillColor = percentile?.color || (percentileData ? 'lightgray' : 'transparent');
+                  const value = percentile?.value || 0;  
 
-                return (
-                  <GeoJSON
-                    key={`geojson${geoJsonKey}-polygon${indexPolygon}`}
-                    data={polygon}
-                    style={{ fillColor, fillOpacity: 1, color: 'black', opacity: 1, weight: 0.5}}
-                  >
-                    <Popup key={`geojson${geoJsonKey}-popup${indexPolygon}`}>
-                      <div dangerouslySetInnerHTML={{ __html: generatePopup(polygon.properties, value) }}></div>  
-                    </Popup>
-                    {/* <Popup>{value}</Popup>  */}
-                    <Tooltip>{nama}</Tooltip> 
-                  </GeoJSON>
-                );
-              })
-            } 
-          </MapContainer> 
-          <div key="range" className="flex mt-2 justify-center">
-            {
-              rangelistData?.map((item, index) => (     
-                  <span key={'range-'+index} className="flex items-center text-sm font-medium text-gray-900 dark:text-white me-3">
-                    <span className="flex w-4 h-4 me-3 shrink-0" style={{backgroundColor: item.color, border: 'black 1px solid'}}></span>
-                    {item.from.toLocaleString('id')} - {item.to.toLocaleString('id')}
-                  </span> 
-              ))
-            }
+                  return (
+                    <GeoJSON
+                      key={`geojson${geoJsonKey}-polygon${indexPolygon}`}
+                      data={polygon}
+                      style={{ fillColor, fillOpacity: 1, color: 'black', opacity: 1, weight: 0.5}}
+                    >
+                      <Popup key={`geojson${geoJsonKey}-popup${indexPolygon}`}>
+                        <div dangerouslySetInnerHTML={{ __html: generatePopup(polygon.properties, value) }}></div>  
+                      </Popup>
+                      {/* <Popup>{value}</Popup>  */}
+                      <Tooltip>{nama}</Tooltip> 
+                    </GeoJSON>
+                  );
+                })
+              } 
+            </MapContainer> 
+            <div key="range" className="flex mt-2 justify-center">
+              {
+                rangelistData?.map((item, index) => (     
+                    <span key={'range-'+index} className="flex items-center text-sm font-medium text-gray-900 dark:text-white me-3">
+                      <span className="flex w-4 h-4 me-3 shrink-0" style={{backgroundColor: item.color, border: 'black 1px solid'}}></span>
+                      {item.from.toLocaleString('id')} - {item.to.toLocaleString('id')}
+                    </span> 
+                ))
+              }
+            </div>
           </div>
-        </div>
-        
+
+          <div className="w-full">
+            <ReactApexChart
+                  options={optionData}
+                  series={seriesData}
+                  type="bar"
+                  height={450}   
+                  width="100%"
+                />
+          </div> 
+        </div> 
+          
       </div>
     </div> 
   );
