@@ -8,6 +8,6 @@ export const metadata: Metadata = {
 
 export default function Root() {
 
-  redirect(`/signin`)
+  redirect(`/map`)
 
 }
